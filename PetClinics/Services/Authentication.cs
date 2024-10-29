@@ -11,21 +11,24 @@ namespace PetClinics.Services
     public class Authentication : IAuthentication
     {
         private readonly UserManager<ExtendedUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _config;
         private readonly ILogger<Authentication> _logger;
-        public Authentication(UserManager<ExtendedUser> userManager, IConfiguration config, ILogger<Authentication> logger)
+        public Authentication(UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration config, ILogger<Authentication> logger)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _config = config;
             _logger = logger;
         }
 
         public async Task<bool> Registration(RegistrationUser user)
         {
-            
+
             var existingUser = await _userManager.FindByEmailAsync(user.Email);
             if (existingUser != null)
             {
+                _logger.LogWarning("Пользователь с данной почтой уже существует ");
                 return false;
             }
 
@@ -34,11 +37,30 @@ namespace PetClinics.Services
                 UserName = user.UserName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                
             };
 
             var result = await _userManager.CreateAsync(identityUser, user.Password);
-            return result.Succeeded;
+            if (result.Succeeded)
+            {
+                if (!string.IsNullOrEmpty(user.Role) && await _roleManager.RoleExistsAsync(user.Role))
+                {
+                    await _userManager.AddToRoleAsync(identityUser, user.Role);
+                }
+                else
+                {
+                    _logger.LogWarning("Данная роль не существует");
+                }
+
+                return true;
+            }
+
+            foreach (var error in result.Errors)
+            {
+                _logger.LogError("Ошибка процесса регистрации: {Error}", error.Description);
+            }
+
+            return false;
+
         }
         public async Task<AuthorizationResponse> Login(LoginUser user)
         {

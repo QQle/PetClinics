@@ -46,7 +46,6 @@ namespace PetClinics.Controllers
                 .Select(x => x.Id)
                 .FirstAsync();
                
-
             var resultObject = new
             {
                 Jwt = loginResult.JwtToken,
@@ -71,17 +70,13 @@ namespace PetClinics.Controllers
             {
                 return BadRequest("Пользователь не найден");
             }
-
             currentUser.RefreshToken = null;
             currentUser.RefreshTokenExpiry = DateTime.MinValue;
-
-
             var updateResult = await _userManager.UpdateAsync(currentUser);
             if (!updateResult.Succeeded)
             {
                 return StatusCode(500, "Не удалось обновить пользователя");
             }
-
             return Ok("Вы успешно вышли из системы");
         }
 
