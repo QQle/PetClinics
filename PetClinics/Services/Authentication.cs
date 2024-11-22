@@ -95,7 +95,7 @@ namespace PetClinics.Services
             }
 
             response.IsLoggedIn = true;
-            response.JwtToken = this.GenerateTokenString(identityUser.Email);
+            response.JwtToken = this.GenerateTokenString(identityUser.UserName);
             response.RefreshToken = this.GenerateRefreshTokenString();
             identityUser.RefreshToken = response.RefreshToken;
             identityUser.RefreshTokenExpiry = DateTime.Now.AddHours(12);
@@ -120,7 +120,7 @@ namespace PetClinics.Services
                 return response;
             }
 
-            var identityUser = await _userManager.FindByEmailAsync(principal.Identity.Name);
+            var identityUser = await _userManager.FindByNameAsync(principal.Identity.Name);
 
             if (identityUser is null)
             {
@@ -139,7 +139,7 @@ namespace PetClinics.Services
             response.RefreshToken = this.GenerateRefreshTokenString();
 
             identityUser.RefreshToken = response.RefreshToken;
-            identityUser.RefreshTokenExpiry = DateTime.Now.AddDays(1);
+            identityUser.RefreshTokenExpiry = DateTime.UtcNow.AddDays(1);
             await _userManager.UpdateAsync(identityUser);
 
             return response;
@@ -200,7 +200,7 @@ namespace PetClinics.Services
 
             var securityToken = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(1),
+                expires: DateTime.UtcNow.AddMinutes(1),
                 signingCredentials: signingCred
             );
 
