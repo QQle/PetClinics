@@ -1,5 +1,8 @@
 ﻿namespace PetClinics.Models
 {
+    /// <summary>
+    /// Класс представляет услугу, предоставляемую в клинике.
+    /// </summary>
     public class Favors
     {
         public Guid Id { get; set; }

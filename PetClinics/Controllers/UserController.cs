@@ -9,18 +9,34 @@ namespace PetClinics.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
+    /// <summary>
+    /// Контроллер для управления операциями пользователей.
+    /// </summary>
     public class UserController : ControllerBase
     {
         private readonly IAuthentication _authService;
         private readonly UserManager<ExtendedUser> _userManager;
         private readonly ClinicDbContext _context;
 
+        /// <summary>
+        /// Конструктор контроллера пользователей.
+        /// </summary>
+        /// <param name="authService">Сервис аутентификации и авторизации.</param>
+        /// <param name="context">Контекст базы данных клиники.</param>
+        /// <param name="userManager">Менеджер пользователей.</param>
         public UserController(IAuthentication authService, ClinicDbContext context, UserManager<ExtendedUser> userManager)
         {
             _authService = authService;
             _context = context;
             _userManager = userManager;
         }
+
+        /// <summary>
+        /// Регистрирует нового пользователя.
+        /// </summary>
+        /// <param name="user">Модель данных для регистрации пользователя.</param>
+        /// <returns>Результат выполнения операции.</returns>
 
         [HttpPost("Registration")]
         public async Task<IActionResult> RegistrationUser([FromBody] RegistrationUser user)
@@ -32,6 +48,12 @@ namespace PetClinics.Controllers
             return BadRequest("что-то пошло не так");
         }
 
+        /// <summary>
+        /// Выполняет вход пользователя в систему.
+        /// </summary>
+        /// <param name="user">Модель данных для авторизации пользователя.</param>
+        /// <returns>JWT токен, Refresh токен и идентификатор текущего пользователя.</returns>
+  
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginUser user)
         {
@@ -59,13 +81,18 @@ namespace PetClinics.Controllers
             return Unauthorized();
         }
 
+        /// <summary>
+        /// Выполняет выход пользователя из системы.
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя, выполняющего выход.</param>
+        /// <returns>Результат выполнения операции.</returns>
 
         [HttpPost("Logout")]
         [Authorize]
-        public async Task<IActionResult> Logout(string userName)
+        public async Task<IActionResult> Logout([FromBody]string userId)
         {
 
-            var currentUser = await _userManager.FindByNameAsync(userName);
+            var currentUser = await _userManager.FindByIdAsync(userId);
             if (currentUser == null)
             {
                 return BadRequest("Пользователь не найден");
@@ -80,8 +107,13 @@ namespace PetClinics.Controllers
             return Ok("Вы успешно вышли из системы");
         }
 
-        [HttpPost("RefreshToken")]
+        /// <summary>
+        /// Обновляет токен доступа с использованием токена обновления.
+        /// </summary>
+        /// <param name="model">Модель данных для обновления токена.</param>
+        /// <returns>Обновлённый JWT токен или ошибка авторизации.</returns>
 
+        [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshToken model)
         {
             var loginResult = await _authService.RefreshToken(model);

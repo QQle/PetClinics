@@ -8,12 +8,23 @@ using System.Text;
 
 namespace PetClinics.Services
 {
+    /// <summary>
+    /// Сервис для аутентификации пользователей, включая регистрацию, логин, обновление токенов и генерацию JWT.
+    /// </summary>
     public class Authentication : IAuthentication
     {
         private readonly UserManager<ExtendedUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _config;
         private readonly ILogger<Authentication> _logger;
+
+        /// <summary>
+        /// Конструктор для инъекции зависимостей.
+        /// </summary>
+        /// <param name="userManager">Менеджер пользователей.</param>
+        /// <param name="roleManager">Менеджер ролей.</param>
+        /// <param name="config">Конфигурация приложения.</param>
+        /// <param name="logger">Логгер для логирования ошибок и предупреждений.</param>
         public Authentication(UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration config, ILogger<Authentication> logger)
         {
             _userManager = userManager;
@@ -22,6 +33,11 @@ namespace PetClinics.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Регистрация нового пользователя.
+        /// </summary>
+        /// <param name="user">Данные пользователя для регистрации.</param>
+        /// <returns>Возвращает результат регистрации.</returns>
         public async Task<bool> Registration(RegistrationUser user)
         {
 
@@ -56,12 +72,18 @@ namespace PetClinics.Services
 
             foreach (var error in result.Errors)
             {
-                _logger.LogError("Ошибка процесса регистрации: {Error}", error.Description);
+                _logger.LogError($"Ошибка процесса регистрации: {error.Description}");
             }
 
             return false;
 
         }
+
+        /// <summary>
+        /// Вход пользователя в систему с получением JWT и Refresh токена.
+        /// </summary>
+        /// <param name="user">Данные пользователя для входа.</param>
+        /// <returns>Ответ с JWT токеном и Refresh токеном.</returns>
         public async Task<AuthorizationResponse> Login(LoginUser user)
         {
             var response = new AuthorizationResponse();
@@ -81,6 +103,12 @@ namespace PetClinics.Services
 
             return response;
         }
+
+        /// <summary>
+        /// Обновление Refresh токена и получение нового JWT токена.
+        /// </summary>
+        /// <param name="model">Модель с JWT и Refresh токенами.</param>
+        /// <returns>Ответ с обновленным JWT и Refresh токенами.</returns>
         public async Task<AuthorizationResponse> RefreshToken(RefreshToken model)
         {
             var principal = GetTokenPrincipal(model.JwtToken);
@@ -116,6 +144,12 @@ namespace PetClinics.Services
 
             return response;
         }
+
+        /// <summary>
+        /// Валидация и извлечение данных из токена.
+        /// </summary>
+        /// <param name="token">JWT токен.</param>
+        /// <returns>Возвращает информацию о пользователе из токена.</returns>
         private ClaimsPrincipal? GetTokenPrincipal(string token)
         {
 
@@ -132,6 +166,10 @@ namespace PetClinics.Services
             return new JwtSecurityTokenHandler().ValidateToken(token, validation, out _);
         }
 
+        /// <summary>
+        /// Генерация нового Refresh токена.
+        /// </summary>
+        /// <returns>Возвращает новый случайный Refresh токен.</returns>
         private string GenerateRefreshTokenString()
         {
             var randomNumber = new byte[64];
@@ -144,12 +182,16 @@ namespace PetClinics.Services
             return Convert.ToBase64String(randomNumber);
         }
 
+        /// <summary>
+        /// Генерация нового JWT токена для пользователя.
+        /// </summary>
+        /// <param name="userName">Имя пользователя для включения в токен.</param>
+        /// <returns>Возвращает JWT токен для пользователя.</returns>
         private string GenerateTokenString(string userName)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name,userName),
-                new Claim(ClaimTypes.Role,"Admin"),
+                new Claim(ClaimTypes.Name,userName)
             };
 
             var staticKey = _config.GetSection("Jwt:Key").Value;
@@ -160,7 +202,7 @@ namespace PetClinics.Services
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(1),
                 signingCredentials: signingCred
-                );
+            );
 
             string tokenString = new JwtSecurityTokenHandler().WriteToken(securityToken);
             return tokenString;

@@ -1,5 +1,8 @@
 ﻿namespace PetClinics.Models
 {
+    /// <summary>
+    /// Класс представляет питомца, зарегистрированного в клинике.
+    /// </summary>
     public class Pet
     {
         public Guid Id { get; set; }

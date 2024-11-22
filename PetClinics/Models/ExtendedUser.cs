@@ -2,6 +2,9 @@
 
 namespace PetClinics.Models
 {
+    /// <summary>
+    /// Класс представляет пользователя системы с дополнительными данными.
+    /// </summary>
     public class ExtendedUser : IdentityUser
     {
         public string? RefreshToken { get; set; }

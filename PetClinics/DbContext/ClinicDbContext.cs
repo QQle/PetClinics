@@ -1,19 +1,56 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PetClinics.Models;
+
+/// <summary>
+/// Контекст базы данных для работы с сущностями клиники, наследуемый от IdentityDbContext.
+/// </summary>
 public class ClinicDbContext : IdentityDbContext
 {
-        public ClinicDbContext(DbContextOptions<ClinicDbContext> options) : base(options)
-        {
+    /// <summary>
+    /// Конструктор контекста базы данных.
+    /// </summary>
+    /// <param name="options">Параметры конфигурации контекста.</param>
+    public ClinicDbContext(DbContextOptions<ClinicDbContext> options) : base(options)
+    {
             Database.EnsureCreated();
-        }
-        public DbSet<Pet> Pets { get; set; }
-        public DbSet<Veterinarian> Veterinarians { get; set; }
-        public DbSet<ExtendedUser> ExtendedUser { get; set; }
-        public DbSet<Favors> Favors { get; set; }
-        public DbSet<Bids> Bids { get; set; }
-      protected override void OnModelCreating(ModelBuilder modelBuilder)
-      {
+    }
+    /// <summary>
+    /// Таблица с питомцами.
+    /// </summary>
+    public DbSet<Pet> Pets { get; set; }
+
+    /// <summary>
+    /// Таблица с ветеринарами.
+    /// </summary>
+    public DbSet<Veterinarian> Veterinarians { get; set; }
+
+    /// <summary>
+    /// Таблица с пользователями.
+    /// </summary>
+    public DbSet<ExtendedUser> ExtendedUser { get; set; }
+
+    /// <summary>
+    /// Таблица с услугами.
+    /// </summary>
+    public DbSet<Favors> Favors { get; set; }
+
+    /// <summary>
+    /// Таблица с заявками.
+    /// </summary>
+    public DbSet<Bids> Bids { get; set; }
+
+    /// <summary>
+    /// Таблица для связи пользователей с питомцами.
+    /// </summary>
+    public DbSet<PetsOwners> PetsOwners { get; set; }
+
+    /// <summary>
+    /// Метод для конфигурации моделей базы данных.
+    /// </summary>
+    /// <param name="modelBuilder">Объект ModelBuilder для настройки сущностей.</param>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<PetsOwners>()
@@ -53,7 +90,7 @@ public class ClinicDbContext : IdentityDbContext
                 .HasForeignKey(b => b.FavorsId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-      }
+    }
 }
 
 

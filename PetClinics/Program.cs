@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PetClinics.Models;
-using System.Net;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,8 +22,6 @@ builder.Services.AddIdentity<ExtendedUser, IdentityRole>(options =>
 }).AddEntityFrameworkStores<ClinicDbContext>()
   .AddDefaultTokenProviders();
 
-
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -34,15 +31,18 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters()
     {
         ValidateActor = false,
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidateAudience = true,
         RequireExpirationTime = true,
         ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero,
+        ValidIssuer = builder.Configuration.GetSection("Jwt:Issuer").Value,
+        ValidAudience = builder.Configuration.GetSection("Jwt:Audience").Value,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Jwt:Key").Value)),
 
     };
 });
+
 builder.Services.AddScoped<PetClinics.Services.IAuthentication, PetClinics.Services.Authentication>();
 builder.Services.AddCors(options =>
 {
@@ -70,11 +70,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
- async Task CreateRoles(IServiceProvider serviceProvider)
- {
+async Task CreateRoles(IServiceProvider serviceProvider)
+{
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    string[] roleNames = {"Veterinarian", "User"};
+    string[] roleNames = { "Veterinarian", "User" };
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
@@ -82,7 +82,9 @@ if (app.Environment.IsDevelopment())
             await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
- }
+}
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 
 app.UseHttpsRedirection();

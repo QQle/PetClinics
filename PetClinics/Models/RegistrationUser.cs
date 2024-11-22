@@ -4,6 +4,9 @@ using Microsoft.Extensions.Options;
 
 namespace PetClinics.Models
 {
+    /// <summary>
+    /// Класс, представляющий данные, необходимые для регистрации нового пользователя.
+    /// </summary>
     public class RegistrationUser
     {
         public string? UserName { get; set; }
