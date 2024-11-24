@@ -61,7 +61,7 @@ namespace PetClinics.Controllers
         /// <param name="veterinarianId">Идентификатор ветеринара.</param>
         /// <returns>Список заявок, связанных с ветеринаром, отсортированный по названию услуг.</returns>
 
-        [HttpGet("GetVeterinarianBids")]
+        [HttpPost("GetVeterinarianBids")]
         public async Task<IActionResult> GetVeterinarianBids([FromBody] Guid veterinarianId)
         {
             var bids = await _context.Bids
@@ -69,6 +69,28 @@ namespace PetClinics.Controllers
             .OrderBy(b => b.Favors.Name)
             .ToListAsync();
             return Ok(bids);
+        }
+
+        public record ExtendetVeterinarian(Guid VeterinarianId, string Specialization, string Address, double YearsOfExperience, double Price);
+        [HttpPost("UpdateVeterinarianInfo")]
+        public async Task<IActionResult> UpdateVeterinarianInfo([FromBody] ExtendetVeterinarian veterinarian)
+        {
+            var existingVeterinarian = await _context.Veterinarians
+        .FirstOrDefaultAsync(v => v.Id == veterinarian.VeterinarianId);
+
+            if (existingVeterinarian == null)
+            {
+                return NotFound(new { Message = "Ветеринар с указанным идентификатором не найден." });
+            }
+
+            existingVeterinarian.Specialization = veterinarian.Specialization;
+            existingVeterinarian.Address = veterinarian.Address;
+            existingVeterinarian.YearsOfExperience = (int)veterinarian.YearsOfExperience;
+            existingVeterinarian.Price = veterinarian.Price;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Информация о ветеринаре успешно обновлена." });
         }
 
     }

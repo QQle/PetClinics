@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PetClinics.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,6 +18,7 @@ namespace PetClinics.Services
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _config;
         private readonly ILogger<Authentication> _logger;
+        private readonly ClinicDbContext _context;
 
         /// <summary>
         /// Конструктор для инъекции зависимостей.
@@ -25,12 +27,13 @@ namespace PetClinics.Services
         /// <param name="roleManager">Менеджер ролей.</param>
         /// <param name="config">Конфигурация приложения.</param>
         /// <param name="logger">Логгер для логирования ошибок и предупреждений.</param>
-        public Authentication(UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration config, ILogger<Authentication> logger)
+        public Authentication(UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration config, ILogger<Authentication> logger, ClinicDbContext context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _config = config;
             _logger = logger;
+            _context = context;
         }
 
         /// <summary>
@@ -61,6 +64,22 @@ namespace PetClinics.Services
                 if (!string.IsNullOrEmpty(user.Role) && await _roleManager.RoleExistsAsync(user.Role))
                 {
                     await _userManager.AddToRoleAsync(identityUser, user.Role);
+                    if (user.Role.Equals("Veterinarian", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var veterinarian = new Veterinarian
+                        {
+                            Id = Guid.Parse(identityUser.Id), 
+                            Name = user.UserName, 
+                            Email = user.Email,
+                            PhoneNumber = user.PhoneNumber,
+                            Specialization = "", 
+                            YearsOfExperience = 0,
+                            Price = 0, 
+                        };
+
+                        await _context.Veterinarians.AddAsync(veterinarian);
+                        await _context.SaveChangesAsync();
+                    }
                 }
                 else
                 {
@@ -76,7 +95,6 @@ namespace PetClinics.Services
             }
 
             return false;
-
         }
 
         /// <summary>

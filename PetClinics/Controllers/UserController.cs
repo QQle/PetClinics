@@ -18,6 +18,7 @@ namespace PetClinics.Controllers
         private readonly IAuthentication _authService;
         private readonly UserManager<ExtendedUser> _userManager;
         private readonly ClinicDbContext _context;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
         /// <summary>
         /// Конструктор контроллера пользователей.
@@ -25,11 +26,12 @@ namespace PetClinics.Controllers
         /// <param name="authService">Сервис аутентификации и авторизации.</param>
         /// <param name="context">Контекст базы данных клиники.</param>
         /// <param name="userManager">Менеджер пользователей.</param>
-        public UserController(IAuthentication authService, ClinicDbContext context, UserManager<ExtendedUser> userManager)
+        public UserController(IAuthentication authService, ClinicDbContext context, UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _authService = authService;
             _context = context;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         /// <summary>
@@ -67,13 +69,43 @@ namespace PetClinics.Controllers
                 .Where(x => x.UserName == user.UserName)
                 .Select(x => x.Id)
                 .FirstAsync();
-               
-            var resultObject = new
+
+            var role = await _context.UserRoles
+                .Where(ur => ur.UserId == currentUser)
+                .Join(
+                    _context.Roles,
+                    ur => ur.RoleId,
+                    r => r.Id,
+                    (ur, r) => r.Name
+                )
+                .FirstAsync();
+
+
+            object resultObject;
+
+            if (role == "Veterinarian")
             {
-                Jwt = loginResult.JwtToken,
-                Refresh = loginResult.RefreshToken,
-                CurrentUser = currentUser
-            };
+                var extendedInfoFull = await ExtendedInfo(currentUser, role);
+
+                resultObject = new
+                {
+                    Jwt = loginResult.JwtToken,
+                    Refresh = loginResult.RefreshToken,
+                    CurrentUser = currentUser,
+                    Role = role,
+                    ExtendedInfo = extendedInfoFull
+                };
+            }
+            else
+            {
+                resultObject = new
+                {
+                    Jwt = loginResult.JwtToken,
+                    Refresh = loginResult.RefreshToken,
+                    CurrentUser = currentUser,
+                    Role = role
+                };
+            }
             if (loginResult.IsLoggedIn)
             {
                 return Ok(resultObject);
@@ -88,7 +120,6 @@ namespace PetClinics.Controllers
         /// <returns>Результат выполнения операции.</returns>
 
         [HttpPost("Logout")]
-        [Authorize]
         public async Task<IActionResult> Logout([FromBody]string userId)
         {
 
@@ -122,6 +153,30 @@ namespace PetClinics.Controllers
                 return Ok(loginResult);
             }
             return Unauthorized();
+        }
+
+        private async Task<Boolean> ExtendedInfo(string userId, string role)
+        {
+            if (role == "Veterinarian")
+            {
+                var veterinarian = await _context.Veterinarians
+                    .FirstOrDefaultAsync(v => v.Id.ToString() == userId);
+
+                if (veterinarian == null)
+                {
+
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(veterinarian.Specialization) ||
+                    string.IsNullOrWhiteSpace(veterinarian.Address) ||
+                    veterinarian.YearsOfExperience <= 0 ||
+                    veterinarian.Price <= 0)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

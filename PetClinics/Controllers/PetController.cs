@@ -44,7 +44,7 @@ namespace PetClinics.Controllers
         /// <param name="userId">Идентификатор пользователя-владельца питомцев.</param>
         /// <returns>Список питомцев, принадлежащих указанному пользователю.</returns>
 
-        [HttpGet("GetPetsByOwner")]
+        [HttpPost("GetPetsByOwner")]
         public async Task<IActionResult> GetPetsByOwner([FromBody] string userId)
         {
             var pets = await _context.Pets

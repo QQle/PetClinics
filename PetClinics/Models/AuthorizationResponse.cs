@@ -8,5 +8,6 @@
         public bool IsLoggedIn { get; set; } = false;
         public string JwtToken { get; set; } = string.Empty;
         public string RefreshToken { get; internal set; } = string.Empty;
+        public string? Role { get; }
     }
 }
