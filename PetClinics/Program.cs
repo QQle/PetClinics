@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PetClinics.Models;
+using PetClinics.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,7 +55,8 @@ builder.Services.AddCors(options =>
 
     });
 });
-
+builder.Services.AddScoped<UserHelper>();
+builder.Services.AddScoped<PetHelper>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

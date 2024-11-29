@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetClinics.Models;
 using PetClinics.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace PetClinics.Controllers
 {
@@ -16,6 +17,7 @@ namespace PetClinics.Controllers
     public class UserController : ControllerBase
     {
         private readonly IAuthentication _authService;
+        private readonly UserHelper _userHelper;
         private readonly UserManager<ExtendedUser> _userManager;
         private readonly ClinicDbContext _context;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -26,12 +28,13 @@ namespace PetClinics.Controllers
         /// <param name="authService">Сервис аутентификации и авторизации.</param>
         /// <param name="context">Контекст базы данных клиники.</param>
         /// <param name="userManager">Менеджер пользователей.</param>
-        public UserController(IAuthentication authService, ClinicDbContext context, UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserController(IAuthentication authService, ClinicDbContext context, UserManager<ExtendedUser> userManager, RoleManager<IdentityRole> roleManager, UserHelper helper)
         {
             _authService = authService;
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _userHelper = helper;
         }
 
         /// <summary>
@@ -59,40 +62,26 @@ namespace PetClinics.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginUser user)
         {
-
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
             var loginResult = await _authService.Login(user);
-            var currentUser = await _context.Users
-                .Where(x => x.UserName == user.UserName)
-                .Select(x => x.Id)
-                .FirstAsync();
-
-            var role = await _context.UserRoles
-                .Where(ur => ur.UserId == currentUser)
-                .Join(
-                    _context.Roles,
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => r.Name
-                )
-                .FirstAsync();
-
-
+            Guid currentUser = await _userHelper.GetUserIdByUserName(user.UserName);
+            var userRole = await _userHelper.GetUserRole(currentUser);
+            var hasVeterinarianRole = await _userHelper.HasVeterinarionRole(currentUser);
             object resultObject;
-
-            if (role == "Veterinarian")
+            
+            if (hasVeterinarianRole)
             {
-                var extendedInfoFull = await ExtendedInfo(currentUser, role);
+                var extendedInfoFull = await _userHelper.CheckForExtendedUserInfo(currentUser, hasVeterinarianRole);
 
                 resultObject = new
                 {
                     Jwt = loginResult.JwtToken,
                     Refresh = loginResult.RefreshToken,
                     CurrentUser = currentUser,
-                    Role = role,
+                    Role = userRole,
                     ExtendedInfo = extendedInfoFull
                 };
             }
@@ -103,7 +92,7 @@ namespace PetClinics.Controllers
                     Jwt = loginResult.JwtToken,
                     Refresh = loginResult.RefreshToken,
                     CurrentUser = currentUser,
-                    Role = role
+                    Role = userRole
                 };
             }
             if (loginResult.IsLoggedIn)
@@ -112,6 +101,19 @@ namespace PetClinics.Controllers
             }
             return Unauthorized();
         }
+
+        [HttpPost("GetAllUserBids")]
+        public async Task<IActionResult> GetAllUserBids([FromBody] Guid userId)
+        {
+            var currentUser = await _userHelper.ValidateUser(userId);
+            if(string.IsNullOrEmpty(currentUser))
+            {
+                return BadRequest();
+            }
+            var userBids = await _userHelper.GetUserBids(userId);
+            return Ok(userBids);
+        }
+
 
         /// <summary>
         /// Выполняет выход пользователя из системы.
@@ -122,8 +124,8 @@ namespace PetClinics.Controllers
         [HttpPost("Logout")]
         public async Task<IActionResult> Logout([FromBody]string userId)
         {
-
             var currentUser = await _userManager.FindByIdAsync(userId);
+
             if (currentUser == null)
             {
                 return BadRequest("Пользователь не найден");
@@ -155,28 +157,8 @@ namespace PetClinics.Controllers
             return Unauthorized();
         }
 
-        private async Task<Boolean> ExtendedInfo(string userId, string role)
-        {
-            if (role == "Veterinarian")
-            {
-                var veterinarian = await _context.Veterinarians
-                    .FirstOrDefaultAsync(v => v.Id.ToString() == userId);
+      
 
-                if (veterinarian == null)
-                {
-
-                    return false;
-                }
-
-                if (string.IsNullOrWhiteSpace(veterinarian.Specialization) ||
-                    string.IsNullOrWhiteSpace(veterinarian.Address) ||
-                    veterinarian.YearsOfExperience <= 0 ||
-                    veterinarian.Price <= 0)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
+     
     }
 }

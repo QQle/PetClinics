@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetClinics.Models;
+using PetClinics.Services;
 using System.Security.Cryptography;
 
 namespace PetClinics.Controllers
@@ -15,14 +16,16 @@ namespace PetClinics.Controllers
     public class PetController : Controller
     {
         private readonly ClinicDbContext _context;
+        private readonly PetHelper _petHelper;
 
         /// <summary>
         /// Конструктор контроллера питомцев.
         /// </summary>
         /// <param name="context">Контекст базы данных клиники.</param>
-        public PetController(ClinicDbContext context)
+        public PetController(ClinicDbContext context, PetHelper petHelper)
         {
             _context = context;
+            _petHelper = petHelper;
         }
 
         /// <summary>
@@ -45,11 +48,9 @@ namespace PetClinics.Controllers
         /// <returns>Список питомцев, принадлежащих указанному пользователю.</returns>
 
         [HttpPost("GetPetsByOwner")]
-        public async Task<IActionResult> GetPetsByOwner([FromBody] string userId)
+        public async Task<IActionResult> GetPetsByOwner([FromBody] Guid userId)
         {
-            var pets = await _context.Pets
-                .Where(p => p.PetsOwners.Any(up => up.UserId == userId)) 
-                .ToListAsync();
+            var pets = await _petHelper.GetPetsByUserId(userId);
             return Ok(pets);
         }
 

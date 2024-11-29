@@ -76,7 +76,7 @@ namespace PetClinics.Controllers
         public async Task<IActionResult> UpdateVeterinarianInfo([FromBody] ExtendetVeterinarian veterinarian)
         {
             var existingVeterinarian = await _context.Veterinarians
-        .FirstOrDefaultAsync(v => v.Id == veterinarian.VeterinarianId);
+                .FirstOrDefaultAsync(v => v.Id == veterinarian.VeterinarianId);
 
             if (existingVeterinarian == null)
             {
