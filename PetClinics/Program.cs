@@ -56,6 +56,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddScoped<UserHelper>();
+builder.Services.AddScoped<IEmail, EmailService>();
 builder.Services.AddScoped<PetHelper>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

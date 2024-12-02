@@ -61,6 +61,15 @@ namespace PetClinics.Controllers
             };
 
             _context.Bids.Add(bid);
+
+            var appointment = new VeterinarianSchedule
+            {
+                VeterinarianId = createBid.VeterinarianId.Value,
+                AppointmentDate = createBid.DateOfAdmission
+            };
+
+            _context.VeterinarianSchedule.Add(appointment);
+
             await _context.SaveChangesAsync();
 
             return Ok("Заявка успешно создана.");
@@ -97,11 +106,10 @@ namespace PetClinics.Controllers
                 return BadRequest("Услуга не найдена.");
             }
 
-            var conflictingBid = await _context.Bids
-            .Where(b => b.VeterinarianId == bidModel.VeterinarianId && b.DateOfAdmission == bidModel.DateOfAdmission)
-            .FirstOrDefaultAsync();
+            var isDateTaken = await _context.VeterinarianSchedule
+               .AnyAsync(ad => ad.VeterinarianId == bidModel.VeterinarianId && ad.AppointmentDate == bidModel.DateOfAdmission);
 
-            if (conflictingBid != null)
+            if (isDateTaken)
             {
                 return BadRequest("На указанное время уже есть запись к данному ветеринару.");
             }

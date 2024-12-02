@@ -13,6 +13,8 @@
         public string? Address { get; set; } 
         public int YearsOfExperience { get; set; }
         public double Price { get; set; }
+        public string? PhotoUrl { get; set; }
         public ICollection<Bids>? Bids { get; set; } = new List<Bids>();
+        public ICollection<VeterinarianSchedule>? VeterinarianSchedule { get; set; } = new List<VeterinarianSchedule>();
     }
 }

@@ -12,12 +12,10 @@ namespace PetClinics.Services
         private readonly string VeterinarianRole = "Veterinarian";
         private readonly string Success = "Success";
         private readonly string ValidationError = "User not found";
-
         public UserHelper( ClinicDbContext context)
         {
             _context = context;
         }
-
         public async Task<Guid> GetUserIdByUserName(string username)
         {
             try
@@ -32,6 +30,37 @@ namespace PetClinics.Services
                 throw new Exception("Ошибка при получении идентификатора пользователя", ex);
             }
 
+        }
+        public async Task<string> GetUserNameByUserId(Guid userId)
+        {
+            try
+            {
+                var userName =  await _context.Users
+                    .Where(x => x.Id == userId.ToString())
+                    .Select(x => x.UserName)
+                    .FirstOrDefaultAsync();
+                return userName;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ошибка при получении идентификатора пользователя", ex);
+            }
+
+        }
+        public async Task<string> GetUserEmailById(Guid userId)
+        {
+            try
+            {
+                var email =  await _context.Users
+                    .Where(u => u.Id == userId.ToString())
+                    .Select(u => u.Email)
+                    .FirstOrDefaultAsync();
+                return email;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ошибка при получении почты пользователя", ex);
+            }
         }
         public async Task<string> ValidateUser(Guid userId)
         {
@@ -50,7 +79,6 @@ namespace PetClinics.Services
                 return $"Ошибка валидации: {ex.Message}";
             }
         }
-
         public async Task<bool> CheckForExtendedUserInfo(Guid userId, bool hasVeterinarianRole)
         {
             if (!hasVeterinarianRole)
@@ -75,7 +103,6 @@ namespace PetClinics.Services
             }
             return true;
         }
-
         public async Task<object> GetUserRole(Guid userId)
         {
             var role = await _context.UserRoles
@@ -89,7 +116,6 @@ namespace PetClinics.Services
                 .FirstOrDefaultAsync();
             return role;
         }
-
         public async Task<bool> HasVeterinarionRole(Guid userId)
         {
             var userRole = await GetUserRole(userId);
@@ -100,7 +126,6 @@ namespace PetClinics.Services
             return true;
 
         }
-
         public async Task<object> GetUserBids(Guid userId)
         {
             try

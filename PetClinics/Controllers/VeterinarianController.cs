@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetClinics.Models;
-
+using PetClinics.Services;
+using RazorLight;
 namespace PetClinics.Controllers
 {
     [Route("api/[controller]")]
@@ -15,16 +16,22 @@ namespace PetClinics.Controllers
     {
         private readonly UserManager<ExtendedUser> _userManager;
         private readonly ClinicDbContext _context;
+        private readonly IEmail _email;
+        private readonly UserHelper _userHelper;
+        private readonly PetHelper _petHelper;
 
         /// <summary>
         /// Конструктор контроллера ветеринаров.
         /// </summary>
         /// <param name="context">Контекст базы данных клиники.</param>
         /// <param name="userManager">Менеджер пользователей.</param>
-        public VeterinarianController(ClinicDbContext context, UserManager<ExtendedUser> userManager)
+        public VeterinarianController(ClinicDbContext context, UserManager<ExtendedUser> userManager, IEmail email, UserHelper userHelper, PetHelper petHelper)
         {
             _context = context;
             _userManager = userManager;
+            _email = email;
+            _userHelper = userHelper;
+            _petHelper = petHelper;
         }
 
         /// <summary>
@@ -46,7 +53,7 @@ namespace PetClinics.Controllers
         /// <param name="specialization">Специализация ветеринаров (например, хирург, терапевт).</param>
         /// <returns>Список ветеринаров с указанной специализацией.</returns>
 
-        [HttpGet("GetVeterinarianBySpecialization")]
+        [HttpPost("GetVeterinarianBySpecialization")]
         public async Task<IActionResult> GetVeterinarianBySpecialization([FromBody] string specialization)
         {
             var pets = await _context.Veterinarians
@@ -66,7 +73,17 @@ namespace PetClinics.Controllers
         {
             var bids = await _context.Bids
             .Where(b => b.VeterinarianId == veterinarianId)
-            .OrderBy(b => b.Favors.Name)
+            .Include(b => b.User)       
+            .Include(b => b.Pet)       
+            .Include(b => b.Favors)     
+            .OrderBy(b => b.DateOfAdmission) 
+            .Select(b => new
+            {
+                ClientName = b.User.UserName,     
+                PetName = b.Pet.Name,           
+                FavorName = b.Favors.Name,       
+                DateOfAdmission = b.DateOfAdmission 
+            })
             .ToListAsync();
             return Ok(bids);
         }
@@ -91,6 +108,46 @@ namespace PetClinics.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Информация о ветеринаре успешно обновлена." });
+        }
+
+        [HttpPost("AcceptBids")]
+        public async Task<IActionResult> AcceptBids([FromBody] Guid bidId)
+        {
+            var currentUser = await _context.Bids
+                .Where(b => b.Id == bidId)
+                .Select(u=> Guid.Parse(u.UserId))
+                .FirstAsync();
+            var userName = await _userHelper.GetUserNameByUserId(currentUser);
+            var pet = await _petHelper.GetPetsByBidId(bidId);
+
+            var model = new
+            {
+                CustomerName = userName,
+                PetName = pet
+                
+            };
+
+            var emailPagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "EmailSample.cshtml");
+
+            var razor = new RazorLightEngineBuilder()
+                .UseMemoryCachingProvider()
+                .Build();
+
+            var template = await System.IO.File.ReadAllTextAsync(emailPagePath);
+
+            var htmlContent = await razor.CompileRenderStringAsync("template", template, model);
+
+            string userEmail = await _userHelper.GetUserEmailById(currentUser);
+
+            var emailDto = new Email
+            {
+                SendTo = userEmail,
+                Subject = "Напоминание о приеме",
+                Body = htmlContent
+            };
+
+            _email.SendEmail(emailDto);
+            return Ok("Вы приняли записась");
         }
 
     }

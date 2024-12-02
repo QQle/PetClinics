@@ -17,5 +17,15 @@ namespace PetClinics.Services
                 .ToListAsync();
             return pets;
         }
+
+        public async Task<string> GetPetsByBidId(Guid bidId)
+        {
+            var petName = await _context.Bids
+            .Where(b => b.Id == bidId)
+            .Select(b => b.Pet.Name)
+            .FirstOrDefaultAsync();
+            return petName;
+        }
+
     }
 }

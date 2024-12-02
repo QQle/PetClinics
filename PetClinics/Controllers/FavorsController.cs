@@ -19,6 +19,7 @@ namespace PetClinics.Controllers
             var favors = await _context.Favors
                 .Select(b=>new
                 {
+                    Id = b.Id,
                     Title = b.Name,
                     Description = b.Description,
                     BasePrice = b.BasePrice,

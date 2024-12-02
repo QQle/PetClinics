@@ -49,6 +49,8 @@ public class ClinicDbContext : IdentityDbContext
     /// Метод для конфигурации моделей базы данных.
     /// </summary>
     /// <param name="modelBuilder">Объект ModelBuilder для настройки сущностей.</param>
+
+    public DbSet<VeterinarianSchedule> VeterinarianSchedule { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
             base.OnModelCreating(modelBuilder);
@@ -89,6 +91,15 @@ public class ClinicDbContext : IdentityDbContext
                 .WithMany(f => f.Bids)
                 .HasForeignKey(b => b.FavorsId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<VeterinarianSchedule>()
+           .HasKey(ad => ad.Id);
+
+        modelBuilder.Entity<VeterinarianSchedule>()
+            .HasOne(ad => ad.Veterinarian)
+            .WithMany(v => v.VeterinarianSchedule)
+            .HasForeignKey(ad => ad.VeterinarianId)
+            .OnDelete(DeleteBehavior.Cascade);
 
     }
 }
