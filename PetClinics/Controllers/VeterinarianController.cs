@@ -79,6 +79,7 @@ namespace PetClinics.Controllers
             .OrderBy(b => b.DateOfAdmission) 
             .Select(b => new
             {
+                BidId = b.Id,
                 ClientName = b.User.UserName,     
                 PetName = b.Pet.Name,           
                 FavorName = b.Favors.Name,       
@@ -117,7 +118,7 @@ namespace PetClinics.Controllers
             return Ok(new { Message = "Информация о ветеринаре успешно обновлена." });
         }
 
-        [HttpPost("AcceptBids")]
+        [HttpPatch("AcceptBids")]
         public async Task<IActionResult> AcceptBids([FromBody] Guid bidId)
         {
             var currentUser = await _context.Bids
