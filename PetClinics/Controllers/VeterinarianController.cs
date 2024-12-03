@@ -86,6 +86,7 @@ namespace PetClinics.Controllers
                 Vaccinated = b.Pet.Vaccinated,
                 Sterialized = b.Pet.Sterilized,
                 Age = b.Pet.Age,
+                PetType = b.Pet.Type,
                 Gender = b.Pet.Gender,
                 isAccept = b.IsAccepted
 
