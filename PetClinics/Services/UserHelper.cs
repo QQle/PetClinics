@@ -126,6 +126,22 @@ namespace PetClinics.Services
             return true;
 
         }
+
+        public async Task<bool> SetIsAccepted(Guid bidId)
+        {
+            var currentBid = await _context.Bids.FirstOrDefaultAsync(x => x.Id == bidId);
+            if (currentBid == null)
+            {
+                return false;
+            }
+
+            currentBid.IsAccepted = true;
+
+            _context.Bids.Update(currentBid);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
         public async Task<object> GetUserBids(Guid userId)
         {
             try

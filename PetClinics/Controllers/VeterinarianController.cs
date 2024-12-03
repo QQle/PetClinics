@@ -119,6 +119,7 @@ namespace PetClinics.Controllers
                 .FirstAsync();
             var userName = await _userHelper.GetUserNameByUserId(currentUser);
             var pet = await _petHelper.GetPetsByBidId(bidId);
+            var isSet = await _userHelper.SetIsAccepted(bidId);
 
             var model = new
             {
@@ -149,6 +150,8 @@ namespace PetClinics.Controllers
             _email.SendEmail(emailDto);
             return Ok("Вы приняли записась");
         }
+
+   
 
     }
 }

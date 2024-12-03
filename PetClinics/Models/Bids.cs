@@ -11,6 +11,7 @@
         public Guid? VeterinarianId {  get; set; }
         public Guid? FavorsId { get; set; }
         public DateTime DateOfAdmission { get; set; }
+        public bool IsAccepted { get; set; }
         public Favors? Favors { get; set; }
         public Veterinarian? Veterinarian {  get; set; }
         public ExtendedUser? User { get; set; }
