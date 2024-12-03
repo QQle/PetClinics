@@ -82,7 +82,12 @@ namespace PetClinics.Controllers
                 ClientName = b.User.UserName,     
                 PetName = b.Pet.Name,           
                 FavorName = b.Favors.Name,       
-                DateOfAdmission = b.DateOfAdmission 
+                DateOfAdmission = b.DateOfAdmission,
+                Vaccinated = b.Pet.Vaccinated,
+                Sterialized = b.Pet.Sterilized,
+                Age = b.Pet.Age,
+                isAccept = b.IsAccepted
+
             })
             .ToListAsync();
             return Ok(bids);
