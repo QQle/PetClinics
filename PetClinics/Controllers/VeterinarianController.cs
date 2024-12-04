@@ -97,7 +97,7 @@ namespace PetClinics.Controllers
         }
 
         public record ExtendetVeterinarian(Guid VeterinarianId, string Specialization, string Address, double YearsOfExperience, double Price);
-        [HttpPost("UpdateVeterinarianInfo")]
+        [HttpPatch("UpdateVeterinarianInfo")]
         public async Task<IActionResult> UpdateVeterinarianInfo([FromBody] ExtendetVeterinarian veterinarian)
         {
             var existingVeterinarian = await _context.Veterinarians

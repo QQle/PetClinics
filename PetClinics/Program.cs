@@ -7,6 +7,7 @@ using PetClinics.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+const string usernamecharacters = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ¸ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞß¨";
 
 
 builder.Services.AddDbContext<ClinicDbContext>(options =>
@@ -19,6 +20,7 @@ builder.Services.AddIdentity<ExtendedUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireLowercase = false;
+    options.User.AllowedUserNameCharacters = usernamecharacters;
     options.Password.RequireDigit = false;
 }).AddEntityFrameworkStores<ClinicDbContext>()
   .AddDefaultTokenProviders();
