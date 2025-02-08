@@ -128,15 +128,53 @@ namespace PetClinics.Controllers
             var userName = await _userHelper.GetUserNameByUserId(currentUser);
             var pet = await _petHelper.GetPetsByBidId(bidId);
             var isSet = await _userHelper.SetIsAccepted(bidId);
+            var dateOfAdmission = await _context.Bids
+                  .Where(b => b.Id == bidId)
+                  .Select(u => u.DateOfAdmission)
+                  .FirstAsync();
+            var favorName = await (from bid in _context.Bids
+                                   join favor in _context.Favors on bid.FavorsId equals favor.Id
+                                   where bid.Id == bidId
+                                   select favor.Name)
+                      .FirstAsync();
+            var favorPrice = await (from bid in _context.Bids
+                                    join favor in _context.Favors on bid.FavorsId equals favor.Id
+                                    where bid.Id == bidId
+                                    select favor.BasePrice)
+                      .FirstAsync();
+            var veterinarianName = await (from bid in _context.Bids
+                                          join veterinarian in _context.Veterinarians on bid.VeterinarianId equals veterinarian.Id
+                                          where bid.Id == bidId
+                                          select veterinarian.Name)
+                             .FirstAsync();
+            var veterinarianPrice = await (from bid in _context.Bids
+                                           join veterinarian in _context.Veterinarians on bid.VeterinarianId equals veterinarian.Id
+                                           where bid.Id == bidId
+                                           select veterinarian.Price)
+                             .FirstAsync();
+            var veterinarianPhoto = await (from bid in _context.Bids
+                                           join veterinarian in _context.Veterinarians on bid.VeterinarianId equals veterinarian.Id
+                                           where bid.Id == bidId
+                                           select veterinarian.PhotoUrl)
+                             .FirstAsync();
+            var fullPrice = veterinarianPrice + favorPrice;
+
+
 
             var model = new
             {
                 CustomerName = userName,
-                PetName = pet
+                PetName = pet,
+                VeterenarianName = veterinarianName,
+                FavorName = favorName,
+                Price = fullPrice,
+                DateOfAdmission = dateOfAdmission.ToString("yyyy-MM-dd"),
+                TimeOfAdmission = dateOfAdmission.ToString("HH:mm"),
+                VeterinarianPhoto = veterinarianPhoto,
                 
             };
 
-            var emailPagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "EmailSample.cshtml");
+            var emailPagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "ConfirmationEmailSample.cshtml");
 
             var razor = new RazorLightEngineBuilder()
                 .UseMemoryCachingProvider()
