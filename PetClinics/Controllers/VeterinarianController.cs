@@ -19,6 +19,7 @@ namespace PetClinics.Controllers
         private readonly IEmail _email;
         private readonly UserHelper _userHelper;
         private readonly PetHelper _petHelper;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// Конструктор контроллера ветеринаров.
@@ -197,7 +198,50 @@ namespace PetClinics.Controllers
             return Ok("Вы приняли записась");
         }
 
-   
+        [HttpPost("NearestEntry")]
+        public async Task<IActionResult> FindNearestEntry([FromBody] string specialization)
+        {
+            try
+            {
+                var veterinarians = await _context.Veterinarians
+                    .Where(v => v.Specialization == specialization)
+                    .OrderBy(v => v.Id)
+                    .Take(1)
+                    .ToListAsync();
 
+                var result = new List<object>();
+
+                foreach (var veterinarian in veterinarians)
+                {
+                    var nearestSlot = await _context.VeterinarianSchedule
+                        .Where(a => a.VeterinarianId == veterinarian.Id && a.AppointmentDate > DateTime.UtcNow)
+                        .OrderBy(a => a.AppointmentDate)
+                        .Select(a => a.AppointmentDate)
+                        .FirstOrDefaultAsync();
+
+                    if (nearestSlot == default)
+                    {
+                        nearestSlot = DateTime.UtcNow.Date.AddDays(1).AddHours(9);
+                    }
+
+                    result.Add(new
+                    {
+                        VeterinarianId = veterinarian.Id,
+                        VeterinarianName = veterinarian.Name,
+                        Specialization = veterinarian.Specialization,
+                        NearestAvailableDate = nearestSlot.ToString("dd-MM-yyyy"),
+                        NearestAvailableTime = nearestSlot.ToString("HH:mm"),
+
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при поиске ближайших записей.");
+                return StatusCode(500, "Произошла ошибка при поиске записей.");
+            }
+        }
     }
 }
