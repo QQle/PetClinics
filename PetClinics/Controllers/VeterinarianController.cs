@@ -219,6 +219,11 @@ namespace PetClinics.Controllers
                         .Select(a => a.AppointmentDate)
                         .FirstOrDefaultAsync();
 
+                    var favor = await _context.Favors
+                        .Where(f => f.Specialization == specialization)
+                        .Select(a=>a.Id)
+                        .FirstOrDefaultAsync();
+
                     if (nearestSlot == default)
                     {
                         nearestSlot = DateTime.UtcNow.Date.AddDays(1).AddHours(9);
@@ -229,6 +234,7 @@ namespace PetClinics.Controllers
                         VeterinarianId = veterinarian.Id,
                         VeterinarianName = veterinarian.Name,
                         Specialization = veterinarian.Specialization,
+                        Favor = favor,
                         NearestAvailableDate = nearestSlot.ToString("dd-MM-yyyy"),
                         NearestAvailableTime = nearestSlot.ToString("HH:mm"),
 
