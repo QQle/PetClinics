@@ -17,7 +17,7 @@ namespace PetClinics.Services
                 .Where(p => p.PetsOwners.Any(up => up.UserId == userId.ToString()))
                 .ToListAsync();
             var petsWithRevaccinationInfo = await NeedRevaccination(pets);
-            return new { pets = petsWithRevaccinationInfo }; 
+            return petsWithRevaccinationInfo; 
         }
 
         public async Task<string> GetPetsByBidId(Guid bidId)
@@ -57,7 +57,14 @@ namespace PetClinics.Services
                 result.Add(new
                 {
                     Id = pet.Id,
+                    Type = pet.Type,
+                    Gender = pet.Gender,
+                    Age = pet.Age,
+                    Sterilized = pet.Sterilized,
+                    Vaccinated = pet.Vaccinated,
                     Name = pet.Name,
+                    PetsOwners = pet.PetsOwners,
+                    Bids = pet.Bids,
                     needRevaccination = needRevaccination
                 });
             }
