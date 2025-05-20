@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetClinics.Models;
+using static PetClinics.Controllers.BidController;
 
 namespace PetClinics.Controllers
 {
@@ -82,6 +83,7 @@ namespace PetClinics.Controllers
         /// <returns>Объект ошибки, если валидация не пройдена, или null, если всё корректно.</returns>
         private async Task<BadRequestObjectResult> ValidateBids(CreateBid bidModel)
         {
+            
             var user = await _context.Users.FindAsync(bidModel.UserId);
             if (user is null)
             {
