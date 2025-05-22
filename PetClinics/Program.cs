@@ -70,11 +70,6 @@ using (var scope = app.Services.CreateScope())
     await CreateRoles(services);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 async Task CreateRoles(IServiceProvider serviceProvider)
 {
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -97,5 +92,9 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseSwagger();
+
+app.UseSwaggerUI();
 
 app.Run();
