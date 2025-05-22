@@ -217,7 +217,7 @@ namespace PetClinics.Controllers
             };
         }
 
-        private async Task<string> GenerateEmailBodyAsync(object model)
+        private static async Task<string> GenerateEmailBodyAsync(object model)
         {
             var emailPagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "ConfirmationEmailSample.cshtml");
             var template = await System.IO.File.ReadAllTextAsync(emailPagePath);

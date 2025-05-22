@@ -16,6 +16,7 @@ namespace PetClinics.Controllers
     {
         private readonly UserManager<ExtendedUser> _userManager;
         private readonly ClinicDbContext _context;
+        private readonly Guid _sterilizationId = new Guid("E7B915EE-041D-49BD-AD58-72690158C011");
 
         /// <summary>
         /// Конструктор контроллера заявок.
@@ -106,6 +107,19 @@ namespace PetClinics.Controllers
             if (favor is null)
             {
                 return BadRequest("Услуга не найдена.");
+            }
+
+            if (favor.Id == _sterilizationId)
+            {
+                var alreadyScheduled = await _context.Bids.AnyAsync(b =>
+                    b.PetId == bidModel.PetId &&
+                    b.FavorsId == bidModel.FavorsId &&
+                    b.DateOfAdmission > DateTime.Now);
+
+                if (alreadyScheduled)
+                {
+                    return BadRequest("Питомец уже записан на кастрацию.");
+                }
             }
 
             var isDateTaken = await _context.VeterinarianSchedule
